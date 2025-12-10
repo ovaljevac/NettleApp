@@ -4,63 +4,78 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;   // za novi Input System (UI)
+using UnityEngine.InputSystem.UI;
 
 public class MainMenuUI : MonoBehaviour
 {
-    [Header("Background")]
-    public Sprite backgroundSprite;   // ovdje prevučeš KoprivaBackground
+    [Header("Background & Images")]
+    public Sprite backgroundSprite;
+    public Sprite mainPlantSprite;   // Slika biljke (ako želiš da bude iznad dugmadi)
 
     private Canvas canvas;
     private Font defaultFont;
 
-    // ----- MAIN MENU -----
+    // PANELS
     private GameObject menuPanel;
-
-    // ----- QUIZ -----
     private GameObject quizPanel;
+    private GameObject infoPanel;
+
+    // QUIZ UI REFERENCE
     private Text quizQuestionText;
     private GameObject quizAnswersContainer;
     private List<Button> quizAnswerButtons = new List<Button>();
     private Text quizResultText;
     private Button quizBackToMenuButton;
 
+    // QUIZ DATA
     private class QuizQuestion
     {
         public string question;
         public string[] answers;
         public int correctIndex;
 
-        public QuizQuestion(string q, string[] a, int correct)
+        public QuizQuestion(string q, string[] a, int c)
         {
             question = q;
             answers = a;
-            correctIndex = correct;
+            correctIndex = c;
         }
     }
 
     private List<QuizQuestion> quizQuestions;
-    private int currentQuestionIndex = 0;
+    private int currentQuestionIndex = 0;  // indeks u quizOrder
     private int correctAnswers = 0;
 
-    private Color normalButtonColor = new Color(0.85f, 0.95f, 0.85f, 1f);
-    private Color correctColor = new Color(0.2f, 0.5f, 1f, 1f); // plavo
-    private Color wrongColor = new Color(1f, 0.3f, 0.3f, 1f);   // crveno
+    // novi za random poredak
+    private List<int> quizOrder;           // random redoslijed pitanja
+    private Button currentCorrectButton;   // referenca na tačno dugme
+
+    // BOJE
+    private Color normalButtonColor = new Color(0.9f, 0.9f, 0.9f, 1f); // Svijetlo siva
+    private Color correctColor = new Color(0f, 0.7f, 0f, 1f);          // Zeleno
+    private Color wrongColor = new Color(1f, 0.3f, 0.3f, 1f);         // Crveno
 
     private void Awake()
     {
-        // Unity 6: umjesto Arial.ttf
+        // Učitavanje fonta
         defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (defaultFont == null) defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
         CreateCanvas();
         CreateBackground();
         CreateEventSystem();
-        CreateMenuButtons();
+        
+        // Kreiranje UI sekcija
+        CreateMenuButtons();   // GLAVNI MENI SA 3 DUGMETA
         SetupQuizData();
         CreateQuizUI();
+        CreateInfoUI();
+
+        // Start
+        ShowMainMenu();
     }
 
-    // =====================  CANVAS / BACKGROUND  =====================
+    // -------------------- SETUP --------------------
 
     private void CreateCanvas()
     {
@@ -70,31 +85,32 @@ public class MainMenuUI : MonoBehaviour
         canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 
-        canvasGO.AddComponent<CanvasScaler>();
-        canvasGO.AddComponent<GraphicRaycaster>();
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1080, 1920); // portret
 
-        canvasGO.transform.SetParent(this.transform, false);
+        canvasGO.AddComponent<GraphicRaycaster>();
+        canvasGO.transform.SetParent(transform, false);
     }
 
     private void CreateBackground()
     {
-        if (backgroundSprite == null) return;
-
         GameObject bgGO = new GameObject("Background");
         bgGO.transform.SetParent(canvas.transform, false);
 
         Image img = bgGO.AddComponent<Image>();
-        img.sprite = backgroundSprite;
-        img.preserveAspect = false;
-        img.color = Color.white;
+        if (backgroundSprite != null)
+            img.sprite = backgroundSprite;
+        else
+            img.color = new Color(0.2f, 0.4f, 0.2f); // Tamno zelena ako nema slike
 
         RectTransform rt = img.rectTransform;
-        rt.anchorMin = new Vector2(0f, 0f);
-        rt.anchorMax = new Vector2(1f, 1f);
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
-
-        bgGO.transform.SetAsFirstSibling();
+        
+        bgGO.transform.SetAsFirstSibling(); // pozadina iza svega
     }
 
     private void CreateEventSystem()
@@ -103,37 +119,35 @@ public class MainMenuUI : MonoBehaviour
         {
             GameObject esGO = new GameObject("EventSystem");
             esGO.AddComponent<EventSystem>();
-            esGO.AddComponent<InputSystemUIInputModule>();  // novi Input System
+            esGO.AddComponent<InputSystemUIInputModule>();
         }
     }
 
-    // =====================  MAIN MENU BUTTONS  =====================
+    // -------------------- GLAVNI MENI (3 DUGMETA) --------------------
 
     private void CreateMenuButtons()
     {
-        GameObject panelGO = new GameObject("MenuPanel");
-        panelGO.transform.SetParent(canvas.transform, false);
-        menuPanel = panelGO;
+        // 1. Kontejner panel za dugmad
+        menuPanel = new GameObject("MenuPanel");
+        menuPanel.transform.SetParent(canvas.transform, false);
 
-        RectTransform panelRT = panelGO.AddComponent<RectTransform>();
-        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
+        RectTransform panelRT = menuPanel.AddComponent<RectTransform>();
+        panelRT.anchorMin = new Vector2(0.5f, 0.5f); // Centar ekrana
         panelRT.anchorMax = new Vector2(0.5f, 0.5f);
         panelRT.pivot = new Vector2(0.5f, 0.5f);
-        panelRT.anchoredPosition = Vector2.zero;
-        panelRT.sizeDelta = new Vector2(400f, 300f);
+        panelRT.sizeDelta = new Vector2(600f, 500f); // Veličina panela
 
-        VerticalLayoutGroup vlg = panelGO.AddComponent<VerticalLayoutGroup>();
+        // Vertical Layout Group da ih poreda jedno ispod drugog
+        VerticalLayoutGroup vlg = menuPanel.AddComponent<VerticalLayoutGroup>();
         vlg.childAlignment = TextAnchor.MiddleCenter;
-        vlg.spacing = 15f;
-        vlg.childForceExpandHeight = false;
-        vlg.childForceExpandWidth = true;
+        vlg.spacing = 40f; // Razmak između dugmadi
+        vlg.childControlWidth = false;
+        vlg.childControlHeight = false;
 
-        ContentSizeFitter csf = panelGO.AddComponent<ContentSizeFitter>();
-        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        CreateMenuButton(panelGO.transform, "Pokreni AR kameru", OnARCameraClicked);
-        CreateMenuButton(panelGO.transform, "Kviz znanja", OnQuizClicked);
-        CreateMenuButton(panelGO.transform, "Info o biljci", OnInfoClicked);
+        // 2. Kreiranje 3 dugmeta
+        CreateMenuButton(menuPanel.transform, "Pokreni AR Kameru", OnARCameraClicked);
+        CreateMenuButton(menuPanel.transform, "Kviz Znanja", OnQuizClicked);
+        CreateMenuButton(menuPanel.transform, "Info o biljci", OnInfoClicked);
     }
 
     private void CreateMenuButton(Transform parent, string label, UnityEngine.Events.UnityAction onClick)
@@ -142,24 +156,22 @@ public class MainMenuUI : MonoBehaviour
         buttonGO.transform.SetParent(parent, false);
 
         Image img = buttonGO.AddComponent<Image>();
-        img.color = normalButtonColor;
+        img.color = new Color(1f, 1f, 1f, 0.9f); // Bijela
 
         Button button = buttonGO.AddComponent<Button>();
+        button.onClick.AddListener(onClick);
 
         RectTransform rt = buttonGO.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(300f, 70f);
+        rt.sizeDelta = new Vector2(500f, 100f);
 
-        LayoutElement le = buttonGO.AddComponent<LayoutElement>();
-        le.preferredHeight = 70f;
-        le.preferredWidth = 300f;
-
+        // Tekst na dugmetu
         GameObject textGO = new GameObject("Text");
         textGO.transform.SetParent(buttonGO.transform, false);
 
         Text text = textGO.AddComponent<Text>();
         text.text = label;
         text.font = defaultFont;
-        text.fontSize = 26;
+        text.fontSize = 36;
         text.alignment = TextAnchor.MiddleCenter;
         text.color = Color.black;
 
@@ -168,126 +180,124 @@ public class MainMenuUI : MonoBehaviour
         textRT.anchorMax = Vector2.one;
         textRT.offsetMin = Vector2.zero;
         textRT.offsetMax = Vector2.zero;
-
-        button.onClick.AddListener(onClick);
     }
 
-    // =====================  QUIZ DATA  =====================
+    // -------------------- LOGIKA PRIKAZA --------------------
+
+    private void ShowMainMenu()
+    {
+        if (menuPanel != null) menuPanel.SetActive(true);
+        if (quizPanel != null) quizPanel.SetActive(false);
+        if (infoPanel != null) infoPanel.SetActive(false);
+    }
+
+    // -------------------- KVIZ DIO --------------------
 
     private void SetupQuizData()
     {
         quizQuestions = new List<QuizQuestion>();
 
         quizQuestions.Add(new QuizQuestion(
-            "Koji je latinski naziv obične koprive?",
-            new string[]
-            {
-                "Urtica dioica",
-                "Mentha piperita",
-                "Taraxacum officinale",
-                "Rosa canina"
-            },
-            0
-        ));
+            "Latinski naziv koprive?",
+            new string[] { "Urtica dioica", "Mentha piperita", "Rosa canina", "Pinus" },
+            0));
 
         quizQuestions.Add(new QuizQuestion(
-            "Zašto kopriva \"peče\" kožu kada je dotaknemo?",
-            new string[]
-            {
-                "Zbog sitnih dlačica ispunjenih iritirajućom tekućinom",
-                "Zbog oštrog trnja na stabljici",
-                "Zbog otrovnih bobica",
-                "Zbog mirisnih ulja u listu"
-            },
-            0
-        ));
+            "Zašto kopriva peče?",
+            new string[] { "Kiselina u dlačicama", "Trnje", "Magija", "Toplota" },
+            0));
 
         quizQuestions.Add(new QuizQuestion(
-            "Koji dio koprive se najčešće koristi za čaj?",
-            new string[]
-            {
-                "Listovi",
-                "Korijen",
-                "Cvijet",
-                "Sjeme"
-            },
-            0
-        ));
+            "Koji dio se bere za čaj?",
+            new string[] { "Listovi", "Sjeme", "Korijen", "Sve" },
+            0));
+
+        quizQuestions.Add(new QuizQuestion(
+            "Kada je najbolje brati koprivu?",
+            new string[] { "U proljeće, prije cvjetanja", "Usred ljeta", "U kasnu jesen", "Usred zime" },
+            0));
+
+        quizQuestions.Add(new QuizQuestion(
+            "Kakva je kopriva po tipu biljke?",
+            new string[] { "Višegodišnja zeljasta biljka", "Jednogodišnji grm", "Iglasto drvo", "Kaktus" },
+            0));
+
+        quizQuestions.Add(new QuizQuestion(
+            "Za šta se najčešće koristi čaj od koprive?",
+            new string[] { "Podrška radu bubrega i mokraćnih puteva", "Snižavanje tjelesne temperature", "Poboljšanje vida", "Povećanje apetita za slatkiše" },
+            0));
+
+        quizQuestions.Add(new QuizQuestion(
+            "Koji dio koprive se često koristi i u ishrani (pite, čorbe)?",
+            new string[] { "Mladi listovi", "Samo cvijet", "Samo korijen", "Samo stabljika" },
+            0));
+
+        quizQuestions.Add(new QuizQuestion(
+            "Šta neutralizira peckanje koprive na koži?",
+            new string[] { "Pranje zahvaćenog mjesta hladnom vodom i sapunom", "Dodatno trljanje listom koprive", "Ugrijavanje mjesta fenom", "Premazivanje uljem za sunčanje" },
+            0));
     }
-
-    // =====================  QUIZ UI  =====================
 
     private void CreateQuizUI()
     {
         quizPanel = new GameObject("QuizPanel");
         quizPanel.transform.SetParent(canvas.transform, false);
 
-        RectTransform panelRT = quizPanel.AddComponent<RectTransform>();
-        panelRT.anchorMin = new Vector2(0.5f, 0.5f);
-        panelRT.anchorMax = new Vector2(0.5f, 0.5f);
-        panelRT.pivot = new Vector2(0.5f, 0.5f);
-        panelRT.anchoredPosition = Vector2.zero;
-        panelRT.sizeDelta = new Vector2(600f, 500f);
+        Image bg = quizPanel.AddComponent<Image>();
+        bg.color = new Color(0, 0, 0, 0.8f); // Tamna polu-providna
+
+        RectTransform panelRT = quizPanel.GetComponent<RectTransform>();
+        panelRT.anchorMin = Vector2.zero;
+        panelRT.anchorMax = Vector2.one;
+        panelRT.offsetMin = Vector2.zero;
+        panelRT.offsetMax = Vector2.zero;
 
         VerticalLayoutGroup vlg = quizPanel.AddComponent<VerticalLayoutGroup>();
-        vlg.childAlignment = TextAnchor.UpperCenter;
-        vlg.spacing = 15f;
-        vlg.childForceExpandHeight = false;
-        vlg.childForceExpandWidth = true;
+        vlg.childAlignment = TextAnchor.MiddleCenter;
+        vlg.spacing = 20f;
+        vlg.padding = new RectOffset(50, 50, 50, 50);
 
         // Pitanje
         GameObject qTextGO = new GameObject("QuestionText");
         qTextGO.transform.SetParent(quizPanel.transform, false);
         quizQuestionText = qTextGO.AddComponent<Text>();
         quizQuestionText.font = defaultFont;
-        quizQuestionText.fontSize = 30;
+        quizQuestionText.fontSize = 40;
         quizQuestionText.alignment = TextAnchor.MiddleCenter;
         quizQuestionText.color = Color.white;
-        RectTransform qrt = qTextGO.GetComponent<RectTransform>();
-        qrt.sizeDelta = new Vector2(600f, 150f);
+        qTextGO.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 150);
 
-        // Container za odgovore
+        // Odgovori Container
         quizAnswersContainer = new GameObject("AnswersContainer");
         quizAnswersContainer.transform.SetParent(quizPanel.transform, false);
-        RectTransform acrt = quizAnswersContainer.AddComponent<RectTransform>();
-        acrt.sizeDelta = new Vector2(600f, 300f);
+        VerticalLayoutGroup ansVLG = quizAnswersContainer.AddComponent<VerticalLayoutGroup>();
+        ansVLG.spacing = 15;
+        ansVLG.childAlignment = TextAnchor.MiddleCenter;
+        quizAnswersContainer.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-        VerticalLayoutGroup answersVLG = quizAnswersContainer.AddComponent<VerticalLayoutGroup>();
-        answersVLG.childAlignment = TextAnchor.MiddleCenter;
-        answersVLG.spacing = 10f;
-        answersVLG.childForceExpandHeight = false;
-        answersVLG.childForceExpandWidth = true;
-
-        ContentSizeFitter answersCSF = quizAnswersContainer.AddComponent<ContentSizeFitter>();
-        answersCSF.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-        // 4 dugmeta za odgovore
+        // 4 Dugmeta za odgovore
         for (int i = 0; i < 4; i++)
         {
-            GameObject btnGO = new GameObject("AnswerButton" + i);
+            GameObject btnGO = new GameObject("AnsBtn" + i);
             btnGO.transform.SetParent(quizAnswersContainer.transform, false);
-
             Image img = btnGO.AddComponent<Image>();
             img.color = normalButtonColor;
-
             Button btn = btnGO.AddComponent<Button>();
             quizAnswerButtons.Add(btn);
-
-            RectTransform brt = btnGO.GetComponent<RectTransform>();
-            brt.sizeDelta = new Vector2(550f, 60f);
-
-            LayoutElement le = btnGO.AddComponent<LayoutElement>();
-            le.preferredHeight = 60f;
-            le.preferredWidth = 550f;
-
+            
             GameObject tGO = new GameObject("Text");
             tGO.transform.SetParent(btnGO.transform, false);
             Text t = tGO.AddComponent<Text>();
             t.font = defaultFont;
-            t.fontSize = 24;
+            t.fontSize = 30;
             t.alignment = TextAnchor.MiddleCenter;
             t.color = Color.black;
-
+            
+            // Layout
+            LayoutElement le = btnGO.AddComponent<LayoutElement>();
+            le.preferredWidth = 600;
+            le.preferredHeight = 80;
+            
             RectTransform trt = tGO.GetComponent<RectTransform>();
             trt.anchorMin = Vector2.zero;
             trt.anchorMax = Vector2.one;
@@ -295,83 +305,73 @@ public class MainMenuUI : MonoBehaviour
             trt.offsetMax = Vector2.zero;
         }
 
-        // Rezultat
-        GameObject resultGO = new GameObject("ResultText");
-        resultGO.transform.SetParent(quizPanel.transform, false);
-        quizResultText = resultGO.AddComponent<Text>();
+        // Rezultat Text
+        GameObject resGO = new GameObject("ResultText");
+        resGO.transform.SetParent(quizPanel.transform, false);
+        quizResultText = resGO.AddComponent<Text>();
         quizResultText.font = defaultFont;
-        quizResultText.fontSize = 26;
+        quizResultText.fontSize = 40;
         quizResultText.alignment = TextAnchor.MiddleCenter;
-        quizResultText.color = Color.white;
-        RectTransform rrt = resultGO.GetComponent<RectTransform>();
-        rrt.sizeDelta = new Vector2(600f, 80f);
-        quizResultText.gameObject.SetActive(false);
+        quizResultText.color = Color.yellow;
+        resGO.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 100);
 
-        // Nazad na meni
-        GameObject backBtnGO = new GameObject("BackToMenuButton");
-        backBtnGO.transform.SetParent(quizPanel.transform, false);
+        // Back Button
+        // Back Button
+GameObject backBtnGO = new GameObject("QuizBackBtn");
+backBtnGO.transform.SetParent(quizPanel.transform, false);
 
-        Image backImg = backBtnGO.AddComponent<Image>();
-        backImg.color = normalButtonColor;
+// VAŽNO: ignorisati VerticalLayoutGroup
+LayoutElement backLayout = backBtnGO.AddComponent<LayoutElement>();
+backLayout.ignoreLayout = true;
 
-        quizBackToMenuButton = backBtnGO.AddComponent<Button>();
-        quizBackToMenuButton.onClick.AddListener(OnBackToMenuClicked);
+// Image
+Image bImg = backBtnGO.AddComponent<Image>();
+bImg.color = Color.white;
 
-        RectTransform backRT = backBtnGO.GetComponent<RectTransform>();
-        backRT.sizeDelta = new Vector2(300f, 60f);
+// Button
+quizBackToMenuButton = backBtnGO.AddComponent<Button>();
+quizBackToMenuButton.onClick.AddListener(ShowMainMenu);
 
-        GameObject backTextGO = new GameObject("Text");
-        backTextGO.transform.SetParent(backBtnGO.transform, false);
-        Text backText = backTextGO.AddComponent<Text>();
-        backText.text = "Nazad na meni";
-        backText.font = defaultFont;
-        backText.fontSize = 24;
-        backText.alignment = TextAnchor.MiddleCenter;
-        backText.color = Color.black;
+// RectTransform – isti kao u InfoBackBtn
+RectTransform quizBackRT = backBtnGO.GetComponent<RectTransform>();
+quizBackRT.anchorMin = new Vector2(0.5f, 0.1f);
+quizBackRT.anchorMax = new Vector2(0.5f, 0.1f);
+quizBackRT.pivot = new Vector2(0.5f, 0.5f);
+quizBackRT.anchoredPosition = Vector2.zero;
+quizBackRT.sizeDelta = new Vector2(300, 80);
 
-        RectTransform btrt = backTextGO.GetComponent<RectTransform>();
-        btrt.anchorMin = Vector2.zero;
-        btrt.anchorMax = Vector2.one;
-        btrt.offsetMin = Vector2.zero;
-        btrt.offsetMax = Vector2.zero;
+// Text
+GameObject btTextGO = new GameObject("Text");
+btTextGO.transform.SetParent(backBtnGO.transform, false);
+Text btText = btTextGO.AddComponent<Text>();
 
-        quizBackToMenuButton.gameObject.SetActive(false);
+btText.text = "Nazad na meni";
+btText.font = defaultFont;
+btText.fontSize = 30;
+btText.color = Color.black;
+btText.alignment = TextAnchor.MiddleCenter;
 
-        // Na početku sakriven kviz
+RectTransform txtRT = btTextGO.GetComponent<RectTransform>();
+txtRT.anchorMin = Vector2.zero;
+txtRT.anchorMax = Vector2.one;
+txtRT.offsetMin = Vector2.zero;
+txtRT.offsetMax = Vector2.zero;
+
+
         quizPanel.SetActive(false);
     }
-
-    // =====================  BUTTON HANDLERS  =====================
-
-    private void OnARCameraClicked()
-    {
-        SceneManager.LoadScene("SampleScene");
-    }
-
-    private void OnQuizClicked()
-    {
-        menuPanel.SetActive(false);
-        quizPanel.SetActive(true);
-        StartQuiz();
-    }
-
-    private void OnInfoClicked()
-    {
-        Debug.Log("Info o biljci (ovdje kasnije možeš dodati poseban ekran).");
-    }
-
-    private void OnBackToMenuClicked()
-    {
-        quizPanel.SetActive(false);
-        menuPanel.SetActive(true);
-    }
-
-    // =====================  QUIZ LOGIC  =====================
 
     private void StartQuiz()
     {
         currentQuestionIndex = 0;
         correctAnswers = 0;
+
+        // napravi listu indeksa pitanja i promiješaj je
+        quizOrder = new List<int>();
+        for (int i = 0; i < quizQuestions.Count; i++)
+            quizOrder.Add(i);
+        ShuffleList(quizOrder);
+
         quizResultText.gameObject.SetActive(false);
         quizBackToMenuButton.gameObject.SetActive(false);
         quizAnswersContainer.SetActive(true);
@@ -381,45 +381,59 @@ public class MainMenuUI : MonoBehaviour
 
     private void ShowCurrentQuestion()
     {
-        QuizQuestion q = quizQuestions[currentQuestionIndex];
+        // Uzmi indeks pitanja iz random reda
+        int questionListIndex = quizOrder[currentQuestionIndex];
+        QuizQuestion q = quizQuestions[questionListIndex];
+
         quizQuestionText.text = q.question;
+
+        // Reset boja + reaktiviraj dugmad
+        foreach (var btn in quizAnswerButtons)
+        {
+            btn.interactable = true;
+            btn.GetComponent<Image>().color = normalButtonColor;
+        }
+
+        // Random raspored odgovora (0,1,2,3)
+        List<int> answerOrder = new List<int> { 0, 1, 2, 3 };
+        ShuffleList(answerOrder);
+
+        currentCorrectButton = null;
 
         for (int i = 0; i < quizAnswerButtons.Count; i++)
         {
             Button btn = quizAnswerButtons[i];
-            Image img = btn.GetComponent<Image>();
-            img.color = normalButtonColor;
+            int answerIndex = answerOrder[i]; // koji odgovor ide na ovo dugme
 
-            Text txt = btn.GetComponentInChildren<Text>();
-            txt.text = q.answers[i];
+            Text btnText = btn.GetComponentInChildren<Text>();
+            btnText.text = q.answers[answerIndex];
 
-            int answerIndex = i;
+            bool isCorrect = (answerIndex == q.correctIndex);
+
+            if (isCorrect)
+                currentCorrectButton = btn;
+
             btn.onClick.RemoveAllListeners();
-            btn.onClick.AddListener(() => OnAnswerClicked(answerIndex));
-            btn.interactable = true;
+            Button btnCopy = btn; // capture
+            btn.onClick.AddListener(() => OnAnswerClicked(btnCopy, isCorrect));
         }
     }
 
-    private void OnAnswerClicked(int index)
+    private void OnAnswerClicked(Button clickedButton, bool isCorrect)
     {
-        QuizQuestion q = quizQuestions[currentQuestionIndex];
-
         foreach (var btn in quizAnswerButtons)
             btn.interactable = false;
 
-        Button clickedBtn = quizAnswerButtons[index];
-        Image clickedImg = clickedBtn.GetComponent<Image>();
-
-        if (index == q.correctIndex)
+        if (isCorrect)
         {
             correctAnswers++;
-            clickedImg.color = correctColor; // plavo
+            clickedButton.GetComponent<Image>().color = correctColor;
         }
         else
         {
-            clickedImg.color = wrongColor;   // crveno
-            Image correctImg = quizAnswerButtons[q.correctIndex].GetComponent<Image>();
-            correctImg.color = correctColor;
+            clickedButton.GetComponent<Image>().color = wrongColor;
+            if (currentCorrectButton != null)
+                currentCorrectButton.GetComponent<Image>().color = correctColor;
         }
 
         StartCoroutine(NextQuestionCoroutine());
@@ -427,25 +441,125 @@ public class MainMenuUI : MonoBehaviour
 
     private IEnumerator NextQuestionCoroutine()
     {
-        yield return new WaitForSeconds(1.0f);
-
+        yield return new WaitForSeconds(1.5f);
         currentQuestionIndex++;
-
-        if (currentQuestionIndex < quizQuestions.Count)
-        {
-            ShowCurrentQuestion();
-        }
-        else
-        {
-            ShowResults();
-        }
+        if (currentQuestionIndex < quizQuestions.Count) ShowCurrentQuestion();
+        else ShowResults();
     }
 
     private void ShowResults()
     {
         quizAnswersContainer.SetActive(false);
         quizResultText.gameObject.SetActive(true);
-        quizResultText.text = $"Imali ste {correctAnswers}/{quizQuestions.Count} tačnih odgovora.";
+        quizResultText.text = "Kraj!\nTačnih odgovora: " + correctAnswers + "/" + quizQuestions.Count;
         quizBackToMenuButton.gameObject.SetActive(true);
+    }
+
+    // -------------------- INFO PANEL --------------------
+
+    private void CreateInfoUI()
+    {
+        infoPanel = new GameObject("InfoPanel");
+        infoPanel.transform.SetParent(canvas.transform, false);
+
+        // Pozadina
+        Image bg = infoPanel.AddComponent<Image>();
+        bg.color = new Color(0.1f, 0.2f, 0.1f, 0.95f); // Tamno zelena
+
+        RectTransform rt = infoPanel.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        // Naslov Info
+        GameObject titleGO = new GameObject("InfoTitle");
+        titleGO.transform.SetParent(infoPanel.transform, false);
+        Text title = titleGO.AddComponent<Text>();
+        title.text = "O KOPRIVI";
+        title.font = defaultFont;
+        title.fontSize = 50;
+        title.alignment = TextAnchor.MiddleCenter;
+        title.color = Color.white;
+        RectTransform titleRT = titleGO.GetComponent<RectTransform>();
+        titleRT.anchorMin = new Vector2(0, 0.8f);
+        titleRT.anchorMax = new Vector2(1, 1);
+        titleRT.offsetMin = Vector2.zero;
+        titleRT.offsetMax = Vector2.zero;
+
+        // Tekst tijela
+        GameObject bodyGO = new GameObject("InfoBody");
+        bodyGO.transform.SetParent(infoPanel.transform, false);
+        Text body = bodyGO.AddComponent<Text>();
+        body.text = "Kopriva (Urtica dioica) je višegodišnja zeljasta biljka.\n\nPoznata je po svojim žarećim dlačicama, ali i kao izuzetno ljekovita biljka. Bogata je željezom, vitaminom C i kalcijem.\n\nKoristi se za čajeve, tinkture i jela.";
+        body.font = defaultFont;
+        body.fontSize = 30;
+        body.alignment = TextAnchor.UpperCenter;
+        body.color = Color.white;
+        RectTransform bodyRT = bodyGO.GetComponent<RectTransform>();
+        bodyRT.anchorMin = new Vector2(0.1f, 0.2f);
+        bodyRT.anchorMax = new Vector2(0.9f, 0.8f);
+
+        // Dugme Nazad
+        GameObject backGO = new GameObject("InfoBackBtn");
+        backGO.transform.SetParent(infoPanel.transform, false);
+        Image bImg = backGO.AddComponent<Image>();
+        bImg.color = Color.white;
+        Button backBtn = backGO.AddComponent<Button>();
+        backBtn.onClick.AddListener(ShowMainMenu);
+
+        RectTransform backRT = backGO.GetComponent<RectTransform>();
+        backRT.anchorMin = new Vector2(0.5f, 0.1f);
+        backRT.anchorMax = new Vector2(0.5f, 0.1f);
+        backRT.sizeDelta = new Vector2(300, 80);
+
+        GameObject bTextGO = new GameObject("Text");
+        bTextGO.transform.SetParent(backGO.transform, false);
+        Text bt = bTextGO.AddComponent<Text>();
+        bt.text = "Nazad";
+        bt.font = defaultFont;
+        bt.fontSize = 30;
+        bt.color = Color.black;
+        bt.alignment = TextAnchor.MiddleCenter;
+        bTextGO.GetComponent<RectTransform>().anchorMin = Vector2.zero;
+        bTextGO.GetComponent<RectTransform>().anchorMax = Vector2.one;
+
+        infoPanel.SetActive(false);
+    }
+
+    // -------------------- BUTTON ACTIONS --------------------
+
+    private void OnARCameraClicked()
+    {
+        Debug.Log("Pokrećem AR kameru...");
+        // SceneManager.LoadScene("ImeTvojeARScene");
+    }
+
+    private void OnQuizClicked()
+    {
+        menuPanel.SetActive(false);
+        infoPanel.SetActive(false);
+        quizPanel.SetActive(true);
+        StartQuiz();
+    }
+
+    private void OnInfoClicked()
+    {
+        menuPanel.SetActive(false);
+        quizPanel.SetActive(false);
+        infoPanel.SetActive(true);
+    }
+
+    // -------------------- HELPER: SHUFFLE --------------------
+
+    private void ShuffleList<T>(List<T> list)
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            int j = Random.Range(i, list.Count);
+            T temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
     }
 }
