@@ -193,6 +193,50 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e7282f5f1c9f3224984828cb7c4e7cbb, type: 3}
   m_PrefabInstance: {fileID: 77703922}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &219523735
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 219523737}
+  - component: {fileID: 219523736}
+  m_Layer: 0
+  m_Name: ARBackButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &219523736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219523735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7628d0e4b3739474885a03d151df48d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ARBackButton
+--- !u!4 &219523737
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219523735}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.01668, y: 0.13384, z: -0.01209}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -459,7 +503,7 @@ GameObject:
   - component: {fileID: 1100502271}
   - component: {fileID: 1100502270}
   - component: {fileID: 1100502269}
-  - component: {fileID: 1100502268}
+  - component: {fileID: 1100502272}
   m_Layer: 0
   m_Name: ImageTarget
   m_TagString: Untagged
@@ -467,25 +511,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1100502268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1100502267}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.ImageTargetPreview
-  mObserverBehaviour: {fileID: 1100502270}
-  mHiddenRoot: {fileID: 0}
-  mTargetName: NettleImageRecognition
-  mDatasetName: 
-  mCastedBehaviour: {fileID: 1100502270}
-  mMeshFilter: {fileID: 0}
-  mMeshRenderer: {fileID: 0}
 --- !u!114 &1100502269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,7 +581,7 @@ MonoBehaviour:
   mMotionHint: 1
   mTrackingOptimization: 0
   mTrackingOptimizationNeedsUpgrade: 0
-  mPreview: {fileID: 1100502268}
+  mPreview: {fileID: 1100502272}
 --- !u!4 &1100502271
 Transform:
   m_ObjectHideFlags: 0
@@ -573,6 +598,25 @@ Transform:
   - {fileID: 77703923}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1100502272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1100502267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1778676317, guid: 8a9a760f95896c34689febc965510927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Vuforia.Unity.Engine.dll::Vuforia.ImageTargetPreview
+  mObserverBehaviour: {fileID: 1100502270}
+  mHiddenRoot: {fileID: 0}
+  mTargetName: NettleImageRecognition
+  mDatasetName: 
+  mCastedBehaviour: {fileID: 1100502270}
+  mMeshFilter: {fileID: 0}
+  mMeshRenderer: {fileID: 0}
 --- !u!1 &1680467482
 GameObject:
   m_ObjectHideFlags: 0
@@ -747,3 +791,4 @@ SceneRoots:
   - {fileID: 1680467488}
   - {fileID: 1100502271}
   - {fileID: 910522579}
+  - {fileID: 219523737}

@@ -149,7 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuUI
   backgroundSprite: {fileID: 21300000, guid: 478d3b78b31f273428ec0e5414b77347, type: 3}
-  mainPlantSprite: {fileID: 0}
+  mainPlantSprite: {fileID: 21300000, guid: 35952d24811060f449817f34a4653929, type: 3}
 --- !u!4 &368939744
 Transform:
   m_ObjectHideFlags: 0

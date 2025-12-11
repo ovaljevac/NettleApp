@@ -4,7 +4,8 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - backgroundSprite: {fileID: 21300000, guid: 6dc6614b5ed06184bb10048db7c64ad5, type: 3}
+  - backgroundSprite: {instanceID: 0}
+  - mainPlantSprite: {fileID: 21300000, guid: 35952d24811060f449817f34a4653929, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
