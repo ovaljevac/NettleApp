@@ -148,8 +148,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50e02560c5e48554a9d21d434d64d535, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuUI
-  backgroundSprite: {fileID: 21300000, guid: 478d3b78b31f273428ec0e5414b77347, type: 3}
+  backgroundSprite: {fileID: 21300000, guid: 423ba04ae153d4d409387e5feb96a7b5, type: 3}
   mainPlantSprite: {fileID: 21300000, guid: 35952d24811060f449817f34a4653929, type: 3}
+  cameraIconSprite: {fileID: 21300000, guid: cf3c81d5138309a4dba8aacd30273126, type: 3}
+  quizIconSprite: {fileID: 21300000, guid: 21002c35e6855cc4bb9148db9b2aad55, type: 3}
+  infoIconSprite: {fileID: 21300000, guid: 27bd537f6d46180488f00e3f5647eec1, type: 3}
+  restartIconSprite: {fileID: 21300000, guid: c79ecca30d45d0043abff290bc4642c5, type: 3}
+  backIconSprite: {fileID: 21300000, guid: a3cd574d48c515b4cbbbfa56f2b7c970, type: 3}
 --- !u!4 &368939744
 Transform:
   m_ObjectHideFlags: 0

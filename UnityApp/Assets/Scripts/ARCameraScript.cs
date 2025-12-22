@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 
 public class ARBackButton : MonoBehaviour
 {
+    [Header("Back Button Icon")]
+    public Sprite backIconSprite;   // postavi u Inspectoru
+
     void Start()
     {
         CreateBackButton();
@@ -11,52 +14,47 @@ public class ARBackButton : MonoBehaviour
 
     private void CreateBackButton()
     {
-        // Canvas
+        // ================= CANVAS =================
         Canvas canvas = FindObjectOfType<Canvas>();
         if (canvas == null)
         {
             GameObject canvasGO = new GameObject("Canvas");
             canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGO.AddComponent<CanvasScaler>();
+
+            CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+
             canvasGO.AddComponent<GraphicRaycaster>();
         }
 
-        // BACK BUTTON (identičan InfoPanel dugmetu)
-        GameObject backGO = new GameObject("ARBackButton");
+        // ================= BACK ICON BUTTON =================
+        GameObject backGO = new GameObject("ARBackIconButton");
         backGO.transform.SetParent(canvas.transform, false);
 
-        Image img = backGO.AddComponent<Image>();
-        img.color = Color.white;
+        Image backImg = backGO.AddComponent<Image>();
+        backImg.sprite = backIconSprite;
+        backImg.preserveAspect = true;
+        backImg.color = Color.white;
 
-        Button btn = backGO.AddComponent<Button>();
-        btn.onClick.AddListener(() =>
+        Button backBtn = backGO.AddComponent<Button>();
+        backBtn.transition = Selectable.Transition.None;
+        backBtn.onClick.AddListener(() =>
         {
-            SceneManager.LoadScene("MainMenu");   // ✨ OVDJE STAVI TAČNO IME TVOJE UI SCENE
+            SceneManager.LoadScene("MainMenu"); // ← TAČNO IME TVOJE UI SCENE
         });
 
+        // Hover / tap feedback (ako već koristiš ovu skriptu)
+    
+
+        // ================= POSITION: DONJI LIJEVI UGAO =================
         RectTransform rt = backGO.GetComponent<RectTransform>();
-        rt.anchorMin = new Vector2(0.5f, 0.08f);
-        rt.anchorMax = new Vector2(0.5f, 0.08f);
-        rt.pivot = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(300, 80);
-        rt.anchoredPosition = Vector2.zero;
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(0f, 0f);
+        rt.pivot = new Vector2(0f, 0f);
 
-        // Text
-        GameObject textGO = new GameObject("Text");
-        textGO.transform.SetParent(backGO.transform, false);
-
-        Text t = textGO.AddComponent<Text>();
-        t.text = "Nazad";
-        t.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        t.fontSize = 30;
-        t.color = Color.black;
-        t.alignment = TextAnchor.MiddleCenter;
-
-        RectTransform txtRT = textGO.GetComponent<RectTransform>();
-        txtRT.anchorMin = Vector2.zero;
-        txtRT.anchorMax = Vector2.one;
-        txtRT.offsetMin = Vector2.zero;
-        txtRT.offsetMax = Vector2.zero;
+        rt.anchoredPosition = new Vector2(32f, 32f); // margina od ivica
+        rt.sizeDelta = new Vector2(72, 72);          // veličina ikonice
     }
 }
