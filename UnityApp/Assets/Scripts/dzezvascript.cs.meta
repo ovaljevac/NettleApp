@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 78583132045700c469f1076f663f2286
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - videoClip: {instanceID: 0}
+  - closeButtonIcon: {fileID: 21300000, guid: 81a1e4a97116291428a93d183e433cd1, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

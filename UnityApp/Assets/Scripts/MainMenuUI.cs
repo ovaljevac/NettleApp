@@ -369,6 +369,15 @@ shadow.effectDistance = new Vector2(2f, -2f);
             "Šta neutralizira peckanje koprive na koži?",
             new string[] { "Pranje zahvaćenog mjesta hladnom vodom i sapunom", "Dodatno trljanje listom koprive", "Ugrijavanje mjesta fenom", "Premazivanje uljem za sunčanje" },
             0));
+         quizQuestions.Add(new QuizQuestion(
+        "Od kada se kopriva koristi za izradu tekstila?",
+        new string[] { "Barem od srednjeg vijeka", "Tek od 20. stoljeća", "Od antičkih Rimljana", "Od 2000. godine" },
+        0));
+
+    quizQuestions.Add(new QuizQuestion(
+        "Koja je vojska tokom Prvog svjetskog rata koristila tkaninu od koprive za uniforme?",
+        new string[] { "Njemačka vojska", "Britanska vojska", "Francuska vojska", "Ruska vojska" },
+        0));
     }
 
   private void CreateQuizUI()
@@ -629,31 +638,45 @@ shadow.effectDistance = new Vector2(2f, -2f);
     }
 
     private void ShowResults()
+{
+    // sakrij pitanje i odgovore
+    quizAnswersContainer.SetActive(false);
+    quizQuestionText.gameObject.SetActive(false);
+
+    int total = quizQuestions.Count;
+    int correct = correctAnswers;
+
+    float scorePercent = (float)correct / total;
+
+    string message;
+
+    if (scorePercent >= 0.9f) // 90–100% tačnih
     {
-        // sakrij pitanje i odgovore
-        quizAnswersContainer.SetActive(false);
-        quizQuestionText.gameObject.SetActive(false);
-
-        int total = quizQuestions.Count;
-        int correct = correctAnswers;
-
-        string message;
-
-        if (correct == total) // 8/8
-            message = "<b>BRAVO! 🎉</b>\nSavršeno! " + correct + "/" + total;
-        else if (correct >= 5) // 5-7/8
-            message = "<b>Odlično! 👏</b>\nSkoro savršeno: " + correct + "/" + total;
-        else if (correct >= 2) // 2-4/8
-            message = "<b>Dobar pokušaj 🙂</b>\nImaš " + correct + "/" + total + ". Pokušaj ponovo!";
-        else // 0-1/8
-            message = "<b>Ne odustaj 💪</b>\nRezultat: " + correct + "/" + total + "\nPročitaj Info pa pokušaj opet!";
-
-        quizResultText.text = message;
-        quizResultText.gameObject.SetActive(true);
-
-        if (quizRestartButton != null) quizRestartButton.gameObject.SetActive(true);
-        quizBackToMenuButton.gameObject.SetActive(true);
+        message = "<b>BRAVO! 🎉</b>\nSavršeno! " + correct + "/" + total;
     }
+    else if (scorePercent >= 0.7f) // 70–89% tačnih
+    {
+        message = "<b>Odlično! 👏</b>\nSkoro savršeno: " + correct + "/" + total;
+    }
+    else if (scorePercent >= 0.4f) // 40–69% tačnih
+    {
+        message = "<b>Dobar pokušaj 🙂</b>\nImaš " + correct + "/" + total + ". Pokušaj ponovo!";
+    }
+    else // ispod 40%
+    {
+        message = "<b>Ne odustaj 💪</b>\nRezultat: " + correct + "/" + total +
+                  "\nPročitaj Info pa pokušaj opet!";
+    }
+
+    quizResultText.text = message;
+    quizResultText.gameObject.SetActive(true);
+
+    if (quizRestartButton != null)
+        quizRestartButton.gameObject.SetActive(true);
+
+    quizBackToMenuButton.gameObject.SetActive(true);
+}
+
 
     // -------------------- INFO PANEL (LANDSCAPE: 2 kolone) --------------------
 
@@ -791,8 +814,18 @@ backRT.sizeDelta = new Vector2(80, 80);
     private void OnARCameraClicked()
     {
         Debug.Log("Pokrećem AR kameru...");
+        ForceLandscape();
         SceneManager.LoadScene("SampleScene");
     }
+
+    private void ForceLandscape()
+{
+    Screen.orientation = ScreenOrientation.LandscapeLeft;
+    Screen.autorotateToPortrait = false;
+    Screen.autorotateToPortraitUpsideDown = false;
+    Screen.autorotateToLandscapeLeft = true;
+    Screen.autorotateToLandscapeRight = true;
+}
 
     private void OnQuizClicked()
     {
