@@ -38,6 +38,8 @@ public class MainMenuUI : MonoBehaviour
     [Header("Quiz Result Icons")]
 public Sprite restartIconSprite;   // npr. refresh/rotate arrow
 public Sprite backIconSprite;      // npr. home/back
+public Sprite answerBackgroundSprite;   // za zaobljeni PNG pozadine odgovora
+
 
 
 private void CreateIconMenuButton(
@@ -383,10 +385,10 @@ shadow.effectDistance = new Vector2(2f, -2f);
   private void CreateQuizUI()
 {
     quizPanel = new GameObject("QuizPanel");
-    quizPanel.transform.SetParent(safeAreaRT, false);
+    quizPanel.transform.SetParent(canvas.transform, false);
 
     Image bg = quizPanel.AddComponent<Image>();
-    bg.color = new Color(0, 0, 0, 0.8f); // Tamna polu-providna
+    bg.color = new Color(0, 0, 0, 0.8f); // tvoj overlay
 
     RectTransform panelRT = quizPanel.GetComponent<RectTransform>();
     panelRT.anchorMin = Vector2.zero;
@@ -394,75 +396,101 @@ shadow.effectDistance = new Vector2(2f, -2f);
     panelRT.offsetMin = Vector2.zero;
     panelRT.offsetMax = Vector2.zero;
 
+    // layout na panelu: pitanje + container za odgovore (grid)
     VerticalLayoutGroup vlg = quizPanel.AddComponent<VerticalLayoutGroup>();
-    vlg.childAlignment = TextAnchor.MiddleCenter;
-    vlg.spacing = 16f;
-    vlg.padding = new RectOffset(60, 60, 40, 40);
+    vlg.childAlignment = TextAnchor.UpperCenter;
+    vlg.spacing = 60f;                             // malo veći razmak da dugmad budu niže
+    vlg.padding = new RectOffset(60, 60, 120, 80); // veći top padding → sve spušteno
+    vlg.childControlWidth = false;
+    vlg.childControlHeight = false;
+    vlg.childForceExpandWidth = false;
+    vlg.childForceExpandHeight = false;
 
     // ---------------- Pitanje ----------------
     GameObject qTextGO = new GameObject("QuestionText");
     qTextGO.transform.SetParent(quizPanel.transform, false);
+
     quizQuestionText = qTextGO.AddComponent<Text>();
     quizQuestionText.font = defaultFont;
-    quizQuestionText.fontSize = 44;
+    quizQuestionText.fontSize = 50;
     quizQuestionText.alignment = TextAnchor.MiddleCenter;
     quizQuestionText.color = Color.white;
-    qTextGO.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 150);
+    quizQuestionText.horizontalOverflow = HorizontalWrapMode.Wrap;
+    quizQuestionText.verticalOverflow = VerticalWrapMode.Overflow;
 
-    // ---------------- Odgovori Container ----------------
-    quizAnswersContainer = new GameObject("AnswersContainer");
-    quizAnswersContainer.transform.SetParent(quizPanel.transform, false);
+    // bitno: da LayoutGroup zna da ovo treba biti široko
+    LayoutElement qLE = qTextGO.AddComponent<LayoutElement>();
+    qLE.preferredWidth = 1200f;   // širina za tekst pitanja
+    qLE.preferredHeight = 120f;
 
-    VerticalLayoutGroup ansVLG = quizAnswersContainer.AddComponent<VerticalLayoutGroup>();
-    ansVLG.spacing = 22;
-    ansVLG.childAlignment = TextAnchor.MiddleCenter;
+    RectTransform qRT = qTextGO.GetComponent<RectTransform>();
+    qRT.sizeDelta = new Vector2(1200f, 120f);
 
-    // KLJUČNO: da se dugmad NE razvlače preko cijele širine
-    ansVLG.childControlWidth = false;
-    ansVLG.childControlHeight = false;
-    ansVLG.childForceExpandWidth = false;
-    ansVLG.childForceExpandHeight = false;
+    // ---------------- Container za odgovore (GRID 2x2) ----------------
+quizAnswersContainer = new GameObject("AnswersContainer");
+quizAnswersContainer.transform.SetParent(quizPanel.transform, false);
 
-    ContentSizeFitter csf = quizAnswersContainer.AddComponent<ContentSizeFitter>();
-    csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-    csf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+// veći blok za odgovore
+RectTransform ansRT = quizAnswersContainer.AddComponent<RectTransform>();
+ansRT.sizeDelta = new Vector2(1400f, 420f);
 
-    // ---------------- 4 Dugmeta za odgovore ----------------
-    for (int i = 0; i < 4; i++)
-    {
-        GameObject btnGO = new GameObject("AnsBtn" + i);
-        btnGO.transform.SetParent(quizAnswersContainer.transform, false);
+LayoutElement ansLE = quizAnswersContainer.AddComponent<LayoutElement>();
+ansLE.preferredWidth  = 1400f;
+ansLE.preferredHeight = 420f;
 
-        Image img = btnGO.AddComponent<Image>();
-        img.color = normalButtonColor;
+// GRID – otprilike duplo veća dugmad
+GridLayoutGroup grid = quizAnswersContainer.AddComponent<GridLayoutGroup>();
+grid.cellSize = new Vector2(640f, 140f);      // 🔹 veća širina i visina
+grid.spacing  = new Vector2(50f, 30f);        // malo veći razmak
+grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+grid.constraintCount = 2;
+grid.childAlignment = TextAnchor.MiddleCenter;
+grid.startAxis = GridLayoutGroup.Axis.Horizontal;
 
-        Button btn = btnGO.AddComponent<Button>();
-        quizAnswerButtons.Add(btn);
+// ---------------- 4 dugmeta za odgovore ----------------
+for (int i = 0; i < 4; i++)
+{
+    GameObject btnGO = new GameObject("AnsBtn" + i);
+    btnGO.transform.SetParent(quizAnswersContainer.transform, false);
 
-        LayoutElement le = btnGO.AddComponent<LayoutElement>();
-        le.preferredWidth = 700;
-        le.preferredHeight = 75;
-        le.flexibleWidth = 0;
-        le.flexibleHeight = 0;
+    Image img = btnGO.AddComponent<Image>();
 
-        RectTransform btnRT = btnGO.GetComponent<RectTransform>();
-        btnRT.sizeDelta = new Vector2(650, 75);
+if (answerBackgroundSprite != null)
+{
+    img.sprite = answerBackgroundSprite;
+    img.type = Image.Type.Sliced;      // VAŽNO za zaobljene uglove (9-slice)
+    img.color = Color.white;           // ili neka blaga nijansa ako hoćeš tint
+}
+else
+{
+    img.color = normalButtonColor;     // fallback ako zaboraviš postaviti sprite
+}
 
-        GameObject tGO = new GameObject("Text");
-        tGO.transform.SetParent(btnGO.transform, false);
 
-        Text t = tGO.AddComponent<Text>();
-        t.font = defaultFont;
-        t.fontSize = 28;
-        t.alignment = TextAnchor.MiddleCenter;
-        t.color = Color.black;
+    Button btn = btnGO.AddComponent<Button>();
+    quizAnswerButtons.Add(btn);
 
-        RectTransform trt = tGO.GetComponent<RectTransform>();
-        trt.anchorMin = Vector2.zero;
-        trt.anchorMax = Vector2.one;
-        trt.offsetMin = Vector2.zero;
-        trt.offsetMax = Vector2.zero;
-    }
+    RectTransform btnRT = btnGO.GetComponent<RectTransform>();
+    btnRT.sizeDelta = Vector2.zero; // veličinu preuzima iz cellSize (GridLayoutGroup)
+
+    GameObject tGO = new GameObject("Text");
+    tGO.transform.SetParent(btnGO.transform, false);
+
+    Text t = tGO.AddComponent<Text>();
+    t.font = defaultFont;
+    t.fontSize = 44;                        // 🔹 malo veći font
+    t.alignment = TextAnchor.MiddleCenter;
+    t.color = Color.black;
+    t.horizontalOverflow = HorizontalWrapMode.Wrap;
+    t.verticalOverflow = VerticalWrapMode.Overflow;
+
+    RectTransform trt = tGO.GetComponent<RectTransform>();
+    trt.anchorMin = Vector2.zero;
+    trt.anchorMax = Vector2.one;
+    trt.offsetMin = Vector2.zero;
+    trt.offsetMax = Vector2.zero;
+}
+
 
     // ---------------- Rezultat Text (CENTAR, VELIKO) ----------------
     GameObject resGO = new GameObject("ResultText");
@@ -486,25 +514,21 @@ shadow.effectDistance = new Vector2(2f, -2f);
     resRT.anchoredPosition = Vector2.zero;
     resRT.sizeDelta = new Vector2(1200, 420);
 
-    // =========================================================
-    // BACK IKONA (UVIJEK VIDLJIVA) - DONJI LIJEVI UGAO
-    // =========================================================
+    // ================= BACK IKONA (donji lijevi) =================
     GameObject backBtnGO = new GameObject("QuizBackIconBtn");
     backBtnGO.transform.SetParent(quizPanel.transform, false);
 
     LayoutElement backLE = backBtnGO.AddComponent<LayoutElement>();
-    backLE.ignoreLayout = true; // da ne utiče na VerticalLayoutGroup
+    backLE.ignoreLayout = true;
 
     Image backImg = backBtnGO.AddComponent<Image>();
-    backImg.sprite = backIconSprite;   // postavi u Inspectoru
+    backImg.sprite = backIconSprite;
     backImg.preserveAspect = true;
     backImg.color = Color.white;
 
     quizBackToMenuButton = backBtnGO.AddComponent<Button>();
     quizBackToMenuButton.transition = Selectable.Transition.None;
     quizBackToMenuButton.onClick.AddListener(ShowMainMenu);
-
-    
 
     RectTransform backRT = backBtnGO.GetComponent<RectTransform>();
     backRT.anchorMin = new Vector2(0f, 0f);
@@ -513,17 +537,15 @@ shadow.effectDistance = new Vector2(2f, -2f);
     backRT.anchoredPosition = new Vector2(32f, 32f);
     backRT.sizeDelta = new Vector2(72, 72);
 
-    // =========================================================
-    // RESTART IKONA (SAMO NA REZULTATU) - DONJI CENTAR, VEĆE
-    // =========================================================
+    // ================= RESTART IKONA (donji centar) =================
     GameObject restartBtnGO = new GameObject("QuizRestartIconBtn");
     restartBtnGO.transform.SetParent(quizPanel.transform, false);
 
     LayoutElement restartLayout = restartBtnGO.AddComponent<LayoutElement>();
-    restartLayout.ignoreLayout = true; // da ne utiče na VerticalLayoutGroup
+    restartLayout.ignoreLayout = true;
 
     Image restartImg = restartBtnGO.AddComponent<Image>();
-    restartImg.sprite = restartIconSprite;   // postavi u Inspectoru
+    restartImg.sprite = restartIconSprite;
     restartImg.preserveAspect = true;
     restartImg.color = Color.white;
 
@@ -531,22 +553,20 @@ shadow.effectDistance = new Vector2(2f, -2f);
     quizRestartButton.transition = Selectable.Transition.None;
     quizRestartButton.onClick.AddListener(StartQuiz);
 
-    
     RectTransform restartRT = restartBtnGO.GetComponent<RectTransform>();
     restartRT.anchorMin = new Vector2(0.5f, 0f);
     restartRT.anchorMax = new Vector2(0.5f, 0f);
     restartRT.pivot = new Vector2(0.5f, 0f);
     restartRT.anchoredPosition = new Vector2(0f, 32f);
-    restartRT.sizeDelta = new Vector2(96, 96); // veće od back ikonice
+    restartRT.sizeDelta = new Vector2(96, 96);
 
-    // restart je samo na rezultatima
     quizRestartButton.gameObject.SetActive(false);
-
-    // back je UVIJEK vidljiv
     quizBackToMenuButton.gameObject.SetActive(true);
 
     quizPanel.SetActive(false);
 }
+
+
 
 
     private void StartQuiz()
@@ -683,7 +703,7 @@ shadow.effectDistance = new Vector2(2f, -2f);
     private void CreateInfoUI()
     {
         infoPanel = new GameObject("InfoPanel");
-        infoPanel.transform.SetParent(safeAreaRT, false);
+        infoPanel.transform.SetParent(canvas.transform, false);
 
         Image bg = infoPanel.AddComponent<Image>();
         bg.color = new Color(0.1f, 0.2f, 0.1f, 0.95f);
@@ -749,15 +769,8 @@ shadow.effectDistance = new Vector2(2f, -2f);
 
         "<b>Upotreba u ishrani</b>\n" +
         "Mladi listovi se beru u proljeće i koriste kao zamjena za špinat. Često se dodaju u čorbe, pite, rižota i smutije. " +
-        "Termičkom obradom kopriva gubi žareća svojstva i postaje potpuno sigurna za konzumaciju.\n\n" +
+        "Termičkom obradom kopriva gubi žareća svojstva i postaje potpuno sigurna za konzumaciju.\n\n";
 
-        "<b>Industrijska i ekološka upotreba</b>\n" +
-        "Vlakna iz stabljike koprive mogu se koristiti za izradu tekstila, slično lanu. " +
-        "Kopriva je takođe cijenjena u organskoj poljoprivredi kao prirodno tečno đubrivo i sredstvo za jačanje biljaka.\n\n" +
-
-        "<b>Napomena</b>\n" +
-        "Informacije u ovoj aplikaciji namijenjene su edukaciji i ne predstavljaju medicinski savjet. " +
-        "Za zdravstvene tegobe uvijek se obratite stručnoj osobi.";
 
         body.font = defaultFont;
         body.fontSize = 26;

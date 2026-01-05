@@ -155,6 +155,7 @@ MonoBehaviour:
   infoIconSprite: {fileID: 21300000, guid: 27bd537f6d46180488f00e3f5647eec1, type: 3}
   restartIconSprite: {fileID: 21300000, guid: c79ecca30d45d0043abff290bc4642c5, type: 3}
   backIconSprite: {fileID: 21300000, guid: a3cd574d48c515b4cbbbfa56f2b7c970, type: 3}
+  answerBackgroundSprite: {fileID: 21300000, guid: 3549bbaf6930fe74c9ee7388411de73e, type: 3}
 --- !u!4 &368939744
 Transform:
   m_ObjectHideFlags: 0

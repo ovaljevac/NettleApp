@@ -195,7 +195,7 @@ public class ARBackButton : MonoBehaviour
         text.fontSize = 24;
 
         // Built-in font (da radi odmah bez dodatnih referenci)
-        text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         text.color = Color.black;
 
         RectTransform textRT = textGO.GetComponent<RectTransform>();
