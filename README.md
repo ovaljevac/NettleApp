@@ -86,21 +86,10 @@ The main menu provides access to:
 
 ---
 
-## 📌 Future Improvements (Optional)
-
-- Additional plant species
-- More quizzes and difficulty levels
-- Multilingual support
-- Expanded POI content
-- User progress tracking
-
----
-
-## 📄 License
-
-This project is developed for educational and research purposes.  
-License details can be added as needed.
-
----
+<p align="center">
+  <img src="screenshots/screenshot1.jpg" width="250" />
+  <img src="screenshots/screenshot2.jpg" width="250" />
+  <img src="screenshots/screenshot3.jpg" width="250" />
+</p>
 
 **NettleApp** – Learn about nettle through augmented reality 🌿
