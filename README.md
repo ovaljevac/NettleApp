@@ -87,9 +87,9 @@ The main menu provides access to:
 ---
 
 <p align="center">
-  <img src="screenshots/screenshot1.jpg" width="250" />
-  <img src="screenshots/screenshot2.jpg" width="250" />
-  <img src="screenshots/screenshot3.jpg" width="250" />
+  <img src="screenshots/screenshot1.jpg"/>
+  <img src="screenshots/screenshot2.jpg"/>
+  <img src="screenshots/screenshot3.jpg"/>
 </p>
 
 **NettleApp** – Learn about nettle through augmented reality 🌿
